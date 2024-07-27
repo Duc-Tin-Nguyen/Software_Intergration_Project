@@ -1,0 +1,13 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "Starting pre-commit hook..."
+npx lint-staged || {
+  echo "Linting failed"
+  exit 1
+}
+
+npm run type-check || {
+  echo "Type checking failed"
+  exit 1
+}
