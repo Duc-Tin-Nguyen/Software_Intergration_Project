@@ -5,4 +5,5 @@ export interface IUser extends Document {
   email: string;
   password: string;
   messages: mongoose.Types.ObjectId[];
+  _id?: mongoose.Types.ObjectId; 
 }

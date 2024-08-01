@@ -1,7 +1,15 @@
 import 'express-session';
-
+import { Session } from 'express-session';
 declare module 'express-session' {
   interface SessionData {
-    user?: any;
+    user?: {
+      _id?: string; 
+      email?: string; 
+    };
+  }
+}
+declare module 'express' {
+  interface Request {
+    session: Session & Partial<SessionData>;
   }
 }
