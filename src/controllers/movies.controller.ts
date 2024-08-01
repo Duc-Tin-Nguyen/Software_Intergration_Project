@@ -1,81 +1,78 @@
-const pool = require('../boot/database/db_connect')
-const logger = require('../middleware/winston')
-const statusCodes = require('../constants/statusCodes')
+import { Request, Response } from 'express';
+import pool from '../boot/database/db_connect';
+import logger from '../middleware/winston';
+import statusCodes from '../constants/statusCodes';
 
-const getMovies = async (req, res) => {
-  const { category } = req.query
+interface Movie {
+  type: string;
+  movie_id: number;
+  [key: string]: any;
+}
+
+const getMovies = async (req: Request, res: Response): Promise<Response> => {
+  const { category } = req.query;
 
   if (category) {
-    const result = await getMoviesByCategory(category)
-    return res.status(statusCodes.success).json({ movies: result })
+    const result = await getMoviesByCategory(category as string);
+    return res.status(statusCodes.success).json({ movies: result });
   } else {
     try {
-      const movies = await pool.query(
-        'SELECT * FROM movies GROUP BY type, movie_id;',
-      )
+      const movies = await pool.query('SELECT * FROM movies GROUP BY type, movie_id;');
 
-      const groupedMovies = movies.rows.reduce((acc, movie) => {
-        const { type } = movie
+      const groupedMovies = movies.rows.reduce((acc: { [key: string]: Movie[] }, movie: Movie) => {
+        const { type } = movie;
         if (!acc[type]) {
-          acc[type] = []
+          acc[type] = [];
         }
-        acc[type].push(movie)
-        return acc
-      }, {})
+        acc[type].push(movie);
+        return acc;
+      }, {});
 
-      return res.status(statusCodes.success).json({ movies: groupedMovies })
+      return res.status(statusCodes.success).json({ movies: groupedMovies });
     } catch (error) {
-      logger.error(error.stack)
-      res
+      logger.error(error.stack);
+      return res
         .status(statusCodes.queryError)
-        .json({ error: 'Exception occured while fetching movies' })
+        .json({ error: 'Exception occurred while fetching movies' });
     }
   }
-}
+};
 
-const getMoviesByCategory = async (category) => {
+const getMoviesByCategory = async (category: string): Promise<Movie[]> => {
   try {
-    const movies = await pool.query(
-      'SELECT * FROM movies WHERE type = $1 ORDER BY release_date DESC;',
-      [category],
-    )
-    return movies.rows
+    const movies = await pool.query('SELECT * FROM movies WHERE type = $1 ORDER BY release_date DESC;', [category]);
+    return movies.rows;
   } catch (error) {
-    logger.error(error.stack)
+    logger.error(error.stack);
+    throw error;
   }
-}
+};
 
-const getTopRatedMovies = async (req, res) => {
+const getTopRatedMovies = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const movies = await pool.query(
-      'SELECT * FROM movies ORDER BY rating DESC LIMIT 10;',
-    )
-    res.status(statusCodes.success).json({ movies: movies.rows })
+    const movies = await pool.query('SELECT * FROM movies ORDER BY rating DESC LIMIT 10;');
+    return res.status(statusCodes.success).json({ movies: movies.rows });
   } catch (error) {
-    logger.error(error.stack)
-    res
+    logger.error(error.stack);
+    return res
       .status(statusCodes.queryError)
-      .json({ error: 'Exception occured while fetching top rated movies' })
+      .json({ error: 'Exception occurred while fetching top rated movies' });
   }
-}
+};
 
-const getSeenMovies = async (req, res) => {
+const getSeenMovies = async (req: Request, res: Response): Promise<Response> => {
   try {
     const movies = await pool.query(
       'SELECT * FROM seen_movies S JOIN movies M ON S.movie_id = M.movie_id WHERE email = $1;',
-      [req.user.email],
-    )
-    res.status(statusCodes.success).json({ movies: movies.rows })
+      [req.user.email]
+    );
+    return res.status(statusCodes.success).json({ movies: movies.rows });
   } catch (error) {
-    logger.error(error.stack)
-    res
+    logger.error(error.stack);
+    return res
       .status(statusCodes.queryError)
-      .json({ error: 'Exception occured while fetching seen movies' })
+      .json({ error: 'Exception occurred while fetching seen movies' });
   }
-}
+};
 
-module.exports = {
-  getMovies,
-  getTopRatedMovies,
-  getSeenMovies,
-}
+export { getMovies, getTopRatedMovies, getSeenMovies };
