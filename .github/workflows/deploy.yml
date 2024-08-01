@@ -1,0 +1,48 @@
+name: Deployment Workflow
+
+on:
+  push:
+    branches:
+      - main
+      - release
+      - pprod
+      - prod
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Run ESLint
+      run: npm run lint
+
+    - name: Run Jest tests
+      run: npm run test
+
+    - name: Build project
+      run: npm run build
+
+    - name: Deploy application
+      env:
+        NODE_ENV: ${{ github.ref_name }}
+      run: |
+        if [ $NODE_ENV == "prod" ]; then
+          ./scripts/deploy_prod.sh
+        elif [ $NODE_ENV == "pprod" ]; then
+          ./scripts/deploy_pprod.sh
+        elif [ $NODE_ENV == "release" ]; then
+          ./scripts/deploy_release.sh
+        else
+          ./scripts/deploy_dev.sh
+        fi
