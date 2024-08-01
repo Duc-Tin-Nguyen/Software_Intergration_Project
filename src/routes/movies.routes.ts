@@ -1,10 +1,10 @@
 import { Router } from 'express';
-import movieServices from '../controllers/movies.controller';
+import { getMovies, getTopRatedMovies, getSeenMovies } from '../controllers/movies.controller';
 
 const router: Router = Router();
 
-router.get('/', movieServices.getMovies);
-router.get('/top', movieServices.getTopRatedMovies);
-router.get('/me', movieServices.getSeenMovies);
+router.get('/', getMovies);
+router.get('/top', getTopRatedMovies);
+router.get('/me', getSeenMovies);
 
 export default router;
