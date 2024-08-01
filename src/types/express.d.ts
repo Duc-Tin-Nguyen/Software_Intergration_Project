@@ -1,10 +1,10 @@
+import { User } from './user';
 import 'express';
 
-declare module 'express' {
-  interface Request {
-    user?: {
-      id: string;
-      email: string;
-    };
+declare global {
+  namespace Express {
+    interface Request {
+      user?: User; 
+    }
   }
 }
