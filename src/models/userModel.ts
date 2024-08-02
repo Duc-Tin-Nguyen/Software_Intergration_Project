@@ -1,5 +1,13 @@
-import mongoose, { Schema } from 'mongoose';
-import { IUser } from '../types/user';
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface IUser extends Document {
+  username: string;
+  email: string;
+  password: string;
+  messages: mongoose.Types.ObjectId[];
+  created_at?: Date;
+  updated_at?: Date;
+}
 
 // Define the User schema
 const userSchema: Schema<IUser> = new Schema(
