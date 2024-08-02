@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import pool from '../boot/database/db_connect'; 
+import pool from '../boot/database/db_connect';
 import logger from '../middleware/winston';
-import { queryError, success } from '../constants/statusCodes'; 
+import { queryError, success } from '../constants/statusCodes';
 
 interface Movie {
   type: string;
@@ -21,7 +21,7 @@ const getMovies = async (req: Request, res: Response): Promise<Response> => {
   } else {
     try {
       const movies = await pool.query('SELECT * FROM movies GROUP BY type, movie_id;');
-      
+
       if (movies.rows.length === 0) {
         return res.status(success).json({ movies: [], message: 'No movies found' });
       }
@@ -44,7 +44,6 @@ const getMovies = async (req: Request, res: Response): Promise<Response> => {
     }
   }
 };
-
 
 const getMoviesByCategory = async (category: string): Promise<Movie[]> => {
   try {
@@ -70,11 +69,11 @@ const getTopRatedMovies = async (_req: Request, res: Response): Promise<Response
 
 const getSeenMovies = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const email = (req.user as { email?: string })?.email;
-    
-    if (!email) {
-      return res.status(queryError).json({ error: 'User email is missing' });
+    if (!req.user || !req.user.email) {
+      return res.status(400).json({ error: 'User email is missing' });
     }
+
+    const email = req.user.email;
 
     const movies = await pool.query(
       'SELECT * FROM seen_movies S JOIN movies M ON S.movie_id = M.movie_id WHERE email = $1;',
