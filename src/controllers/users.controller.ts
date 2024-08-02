@@ -6,6 +6,16 @@ import jwt from 'jsonwebtoken';
 import { RegisterRequestBody, LoginRequestBody } from '../types/authRequestBody';
 import { SessionData } from 'express-session';
 
+// Extend the SessionData interface
+declare module 'express-session' {
+  interface SessionData {
+    user?: {
+      _id: string;
+      email: string;
+    };
+  }
+}
+
 const register = async (req: Request<{}, {}, RegisterRequestBody>, res: Response): Promise<void> => {
   const { email, username, password, country, city, street, creation_date } = req.body;
 
@@ -66,11 +76,12 @@ const login = async (req: Request<{}, {}, LoginRequestBody> & { session: Session
         } else {
           if (result.rows[0]) {
             req.session.user = {
+              _id: result.rows[0]._id.toString(), // Ensure the ObjectId is converted to a string
               email: result.rows[0].email,
             };
 
             const token = jwt.sign(
-              { user: { email: result.rows[0].email } },
+              { user: { _id: result.rows[0]._id.toString(), email: result.rows[0].email } },
               process.env.JWT_SECRET_KEY as string,
               { expiresIn: '1h' }
             );

@@ -1,10 +1,11 @@
 import { Request, Response } from 'express';
-import pool from '../boot/database/db_connect'; 
-import logger from '../middleware/winston'; 
-import { queryError, success, badRequest } from '../constants/statusCodes'; 
-import ratingModel from '../models/ratingModel'; 
+import pool from '../boot/database/db_connect';
+import logger from '../middleware/winston';
+import { queryError, success, badRequest } from '../constants/statusCodes';
+import ratingModel from '../models/ratingModel';
 
 interface User {
+  id: string;
   email: string;
 }
 
@@ -42,9 +43,7 @@ const addRating = async (req: RequestWithUser, res: Response): Promise<void> => 
       res.status(success).json({ message: 'Rating added' });
     } catch (error) {
       logger.error(error.stack || error.message);
-      res
-        .status(queryError)
-        .json({ error: 'Exception occurred while adding rating' });
+      res.status(queryError).json({ error: 'Exception occurred while adding rating' });
     }
   }
 };

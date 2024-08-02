@@ -2,7 +2,17 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import userModel from '../models/userModel';
-import { IUser } from '../types/user'; 
+import { IUser } from '../types/user';
+
+// Extend the SessionData interface
+declare module 'express-session' {
+  interface SessionData {
+    user?: {
+      _id: string;
+      email: string;
+    };
+  }
+}
 
 const signup = async (req: Request, res: Response): Promise<Response> => {
   const { username, email, password } = req.body;
@@ -45,11 +55,12 @@ const signin = async (req: Request, res: Response): Promise<Response> => {
     }
 
     req.session.user = {
-      _id: user._id,
+      _id: user._id.toString(),
+      email: user.email,
     };
 
     const token = jwt.sign(
-      { user: { id: user._id, email: user.email } },
+      { user: { id: user._id.toString(), email: user.email } },
       process.env.JWT_SECRET_KEY as string,
       {
         expiresIn: '1h',
