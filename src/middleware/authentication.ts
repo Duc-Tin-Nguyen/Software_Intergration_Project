@@ -4,6 +4,13 @@ import { unauthorized } from '../constants/statusCodes';
 import logger from './winston';
 import { DecodedToken } from '../types/decodedToken'; 
 
+// Extend the Request interface
+declare module 'express-serve-static-core' {
+  interface Request {
+    user?: DecodedToken['user'];
+  }
+}
+
 const verifyToken = (req: Request, res: Response, next: NextFunction): Response | void => {
   const token = req.header('Authorization');
 
