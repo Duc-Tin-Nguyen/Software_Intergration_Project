@@ -1,12 +1,11 @@
 import { Request, Response } from 'express';
 import pool from '../boot/database/db_connect';
 import logger from '../middleware/winston';
-import { badRequest, queryError, success, userAlreadyExists, notFound } from '../constants/statusCodes';
+import { badRequest, queryError, success, notFound, userAlreadyExists } from '../constants/statusCodes';
 import jwt from 'jsonwebtoken';
 import { RegisterRequestBody, LoginRequestBody } from '../types/authRequestBody';
 import { SessionData } from 'express-session';
 
-// Extend the SessionData interface
 declare module 'express-session' {
   interface SessionData {
     user?: {
@@ -21,42 +20,43 @@ const register = async (req: Request<{}, {}, RegisterRequestBody>, res: Response
 
   if (!email || !username || !password || !country) {
     res.status(badRequest).json({ message: 'Missing parameters' });
-  } else {
-    const client = await pool.connect();
+    return;
+  }
 
-    try {
-      const result = await client.query('SELECT * FROM users WHERE email = $1;', [email]);
+  const client = await pool.connect();
 
-      if (result.rowCount) {
-        res.status(userAlreadyExists).json({ message: 'User already has an account' });
-      } else {
-        await client.query('BEGIN');
-        
-        const addedUser = await client.query(
-          `INSERT INTO users(email, username, password, creation_date)
-           VALUES ($1, $2, crypt($3, gen_salt('bf')), $4);`,
-          [email, username, password, creation_date],
-        );
+  try {
+    const result = await client.query('SELECT * FROM users WHERE email = $1;', [email]);
 
-        logger.info('USER ADDED', addedUser.rowCount);
+    if (result.rowCount) {
+      res.status(userAlreadyExists).json({ message: 'User already has an account' });
+    } else {
+      await client.query('BEGIN');
 
-        const address = await client.query(
-          `INSERT INTO addresses(email, country, street, city) VALUES ($1, $2, $3, $4);`,
-          [email, country, street, city],
-        );
+      const addedUser = await client.query(
+        `INSERT INTO users(email, username, password, creation_date)
+         VALUES ($1, $2, crypt($3, gen_salt('bf')), $4);`,
+        [email, username, password, creation_date],
+      );
 
-        logger.info('ADDRESS ADDED', address.rowCount);
+      logger.info('USER ADDED', addedUser.rowCount);
 
-        res.status(success).json({ message: 'User created' });
-        await client.query('COMMIT');
-      }
-    } catch (error) {
-      await client.query('ROLLBACK');
-      logger.error((error as Error).stack);
-      res.status(queryError).json({ message: 'Exception occurred while registering' });
-    } finally {
-      client.release();
+      const address = await client.query(
+        `INSERT INTO addresses(email, country, street, city) VALUES ($1, $2, $3, $4);`,
+        [email, country, street, city],
+      );
+
+      logger.info('ADDRESS ADDED', address.rowCount);
+
+      res.status(success).json({ message: 'User created' });
+      await client.query('COMMIT');
     }
+  } catch (error) {
+    await client.query('ROLLBACK');
+    logger.error((error as Error).stack);
+    res.status(queryError).json({ message: 'Exception occurred while registering' });
+  } finally {
+    client.release();
   }
 };
 
@@ -65,34 +65,37 @@ const login = async (req: Request<{}, {}, LoginRequestBody> & { session: Session
 
   if (!email || !password) {
     res.status(badRequest).json({ message: 'Missing parameters' });
-  } else {
-    pool.query(
+    return;
+  }
+
+  try {
+    const result = await pool.query(
       'SELECT * FROM users WHERE email = $1 AND password = crypt($2, password);',
-      [email, password],
-      (err: Error, result: { rows: any[] }) => {
-        if (err) {
-          logger.error(err.stack);
-          res.status(queryError).json({ error: 'Exception occurred while logging in' });
-        } else {
-          if (result.rows[0]) {
-            req.session.user = {
-              _id: result.rows[0]._id.toString(), // Ensure the ObjectId is converted to a string
-              email: result.rows[0].email,
-            };
-
-            const token = jwt.sign(
-              { user: { _id: result.rows[0]._id.toString(), email: result.rows[0].email } },
-              process.env.JWT_SECRET_KEY as string,
-              { expiresIn: '1h' }
-            );
-
-            res.status(success).json({ token, username: result.rows[0].username });
-          } else {
-            res.status(notFound).json({ message: 'Incorrect email/password' });
-          }
-        }
-      }
+      [email, password]
     );
+
+    if (result.rows.length > 0) {
+      const user = result.rows[0];
+      const userId = user._id ? user._id.toString() : '';
+
+      req.session.user = {
+        _id: userId,
+        email: user.email,
+      };
+
+      const token = jwt.sign(
+        { user: { _id: userId, email: user.email } },
+        process.env.JWT_SECRET_KEY as string,
+        { expiresIn: '1h' }
+      );
+
+      res.status(success).json({ token, username: user.username });
+    } else {
+      res.status(notFound).json({ message: 'Incorrect email/password' });
+    }
+  } catch (error) {
+    logger.error((error as Error).stack);
+    res.status(queryError).json({ message: 'Exception occurred while logging in' });
   }
 };
 
