@@ -1,6 +1,8 @@
-const mongoose = require('mongoose')
+import mongoose, { Schema } from 'mongoose';
+import { IUser } from '../types/user';
 
-const userSchema = new mongoose.Schema(
+// Define the User schema
+const userSchema: Schema<IUser> = new Schema(
   {
     username: {
       type: String,
@@ -18,14 +20,21 @@ const userSchema = new mongoose.Schema(
       trim: true,
       required: true,
     },
-    messages: [mongoose.Types.ObjectId],
+    messages: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Message', 
+      },
+    ],
   },
   {
     timestamps: {
       createdAt: 'created_at',
       updatedAt: 'updated_at',
     },
-  },
-)
+  }
+);
 
-module.exports = mongoose.model('User', userSchema)
+const User = mongoose.model<IUser>('User', userSchema);
+
+export default User;
