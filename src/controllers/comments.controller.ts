@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import logger from '../middleware/winston';
-import statusCodes from '../constants/statusCodes';
+import { queryError, success, badRequest } from '../constants/statusCodes'; 
 import CommentModel from '../models/commentModel';
-import { AddCommentBody } from '../types/comment'; 
+import { AddCommentBody } from '../types/comment';
 
 const addComment = async (req: Request, res: Response): Promise<void> => {
   const { movie_id } = req.params;
@@ -11,7 +11,7 @@ const addComment = async (req: Request, res: Response): Promise<void> => {
   const movieId = parseInt(movie_id);
 
   if (!movie_id || isNaN(movieId) || !rating || !username || !comment || !title) {
-    res.status(statusCodes.badRequest).json({ message: 'Missing parameters' });
+    res.status(badRequest).json({ message: 'Missing parameters' });
   } else {
     try {
       const commentObj = new CommentModel({
@@ -23,10 +23,10 @@ const addComment = async (req: Request, res: Response): Promise<void> => {
       });
 
       await commentObj.save();
-      res.status(statusCodes.success).json({ message: 'Comment added' });
+      res.status(success).json({ message: 'Comment added' });
     } catch (error) {
       logger.error(error.stack || error.message);
-      res.status(statusCodes.queryError).json({ error: 'Exception occurred while adding comment' });
+      res.status(queryError).json({ error: 'Exception occurred while adding comment' });
     }
   }
 };
@@ -36,14 +36,14 @@ const getCommentsById = async (req: Request, res: Response): Promise<void> => {
   const movieId = parseInt(movie_id);
 
   if (!movie_id || isNaN(movieId)) {
-    res.status(statusCodes.badRequest).json({ message: 'Movie ID missing' });
+    res.status(badRequest).json({ message: 'Movie ID missing' });
   } else {
     try {
       const comments = await CommentModel.find({ movie_id: movieId });
-      res.status(statusCodes.success).json({ comments });
+      res.status(success).json({ comments });
     } catch (error) {
       logger.error(error.stack || error.message);
-      res.status(statusCodes.queryError).json({ error: 'Exception occurred while fetching comments' });
+      res.status(queryError).json({ error: 'Exception occurred while fetching comments' });
     }
   }
 };
