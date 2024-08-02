@@ -6,6 +6,7 @@ const config: Config = {
   setupFilesAfterEnv: ['./jest.setup.ts'],
 
   moduleFileExtensions: ['ts', 'tsx', 'js', 'json', 'node'],
+
 }
 
 export default config
