@@ -14,11 +14,18 @@ const getMovies = async (req: Request, res: Response): Promise<Response> => {
 
   if (category) {
     const result = await getMoviesByCategory(category as string);
+    if (result.length === 0) {
+      return res.status(success).json({ movies: [], message: 'No movies found in this category' });
+    }
     return res.status(success).json({ movies: result });
   } else {
     try {
       const movies = await pool.query('SELECT * FROM movies GROUP BY type, movie_id;');
       
+      if (movies.rows.length === 0) {
+        return res.status(success).json({ movies: [], message: 'No movies found' });
+      }
+
       const groupedMovies = movies.rows.reduce((acc: { [key: string]: Movie[] }, movie: Movie) => {
         const { type } = movie;
         if (!acc[type]) {
@@ -30,13 +37,14 @@ const getMovies = async (req: Request, res: Response): Promise<Response> => {
 
       return res.status(success).json({ movies: groupedMovies });
     } catch (error) {
-      logger.error(error.stack || error.message);
+      logger.error(`Error while fetching movies: ${error.stack || error.message}`);
       return res
         .status(queryError)
         .json({ error: 'Exception occurred while fetching movies' });
     }
   }
 };
+
 
 const getMoviesByCategory = async (category: string): Promise<Movie[]> => {
   try {

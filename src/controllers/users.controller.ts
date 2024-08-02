@@ -70,21 +70,20 @@ const login = async (req: Request<{}, {}, LoginRequestBody> & { session: Session
 
   try {
     const result = await pool.query(
-      'SELECT * FROM users WHERE email = $1 AND password = crypt($2, password);',
+      'SELECT email, username FROM users WHERE email = $1 AND password = crypt($2, password);',
       [email, password]
     );
 
     if (result.rows.length > 0) {
       const user = result.rows[0];
-      const userId = user._id ? user._id.toString() : '';
 
       req.session.user = {
-        _id: userId,
+        _id: user.email,
         email: user.email,
       };
 
       const token = jwt.sign(
-        { user: { _id: userId, email: user.email } },
+        { user: { _id: user.email, email: user.email } },
         process.env.JWT_SECRET_KEY as string,
         { expiresIn: '1h' }
       );
@@ -98,5 +97,7 @@ const login = async (req: Request<{}, {}, LoginRequestBody> & { session: Session
     res.status(queryError).json({ message: 'Exception occurred while logging in' });
   }
 };
+
+
 
 export { register, login };

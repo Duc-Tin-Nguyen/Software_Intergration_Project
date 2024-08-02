@@ -1,10 +1,14 @@
-import mongoose, { Schema } from 'mongoose';
-import { IMessage } from '../types/message';
+import mongoose, { Schema, Document } from 'mongoose';
+
+interface IMessage extends Document {
+  name: string;
+  user: string; // Using email instead of ObjectId
+}
 
 const messageSchema: Schema<IMessage> = new Schema(
   {
     name: { type: String, required: true },
-    user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    user: { type: String, required: true, ref: 'User' }, // Referencing by email
   },
   {
     timestamps: {

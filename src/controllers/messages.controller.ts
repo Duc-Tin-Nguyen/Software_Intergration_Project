@@ -33,21 +33,22 @@ const addMessage = async (req: Request, res: Response): Promise<Response> => {
     return res.status(400).json({ error: 'Missing information' });
   }
 
-  if (!req.session.user) {
+  if (!req.session.user || !req.session.user.email) {
     return res.status(500).json({ error: 'You are not authenticated' });
   }
 
-  message.user = req.session.user._id;
+  message.user = req.session.user.email;
 
   try {
     const messageObj = new messageModel(message);
     await messageObj.save();
     return res.status(200).json(messageObj);
   } catch (error) {
-    console.error('Error while adding message to DB', (error as Error).message);
+    console.error('Error while adding message to DB:', (error as Error).message);
     return res.status(500).json({ error: 'Failed to add message' });
   }
 };
+
 
 const editMessage = async (req: Request, res: Response): Promise<Response> => {
   const { name } = req.body;
