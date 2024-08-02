@@ -1,17 +1,18 @@
 import express from 'express';
+import 'express-session';
+import { Session } from 'express-session';
 
 declare module 'express-session' {
   interface SessionData {
-    user: {
-      _id: string;
+    user?: {
+      _id?: string;
+      email?: string;
     };
   }
 }
 
-declare global {
-  namespace Express {
-    interface Request {
-      session: SessionData;
-    }
+declare module 'express' {
+  interface Request {
+    session: Session & Partial<SessionData>;
   }
 }

@@ -1,6 +1,7 @@
-const mongoose = require('mongoose')
+import mongoose, { Schema } from 'mongoose';
+import { IComment } from '../types/comment.types'; 
 
-const commentSchema = new mongoose.Schema(
+const commentSchema: Schema<IComment> = new Schema(
   {
     movie_id: {
       type: Number,
@@ -39,7 +40,9 @@ const commentSchema = new mongoose.Schema(
     timestamps: {
       createdAt: 'created_at',
     },
-  },
-)
+  }
+);
 
-module.exports = mongoose.model('Comment', commentSchema)
+const CommentModel = mongoose.model<IComment>('Comment', commentSchema);
+
+export default CommentModel;
