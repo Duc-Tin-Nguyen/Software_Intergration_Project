@@ -1,12 +1,12 @@
-name: PR Checks for Dev Environment
+name: Deployment Pipeline for Dev Environment
 
 on:
-  pull_request:
+  push:
     branches:
       - dev
 
 jobs:
-  pr-checks:
+  deploy:
     runs-on: self-hosted
     strategy:
       matrix:
@@ -14,12 +14,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3  # Updated version
 
       - name: Set up Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3  # Updated version
         with:
-          node-version: '14'
+          node-version: '20'  # Specify the desired Node.js version
 
       - name: Install dependencies
         run: npm install
@@ -32,3 +32,8 @@ jobs:
 
       - name: Build the project
         run: npm run build
+
+      - name: Deploy to Development Environment
+        run: |
+          echo "Deploying to development environment..."
+          # Add your deployment script here for dev

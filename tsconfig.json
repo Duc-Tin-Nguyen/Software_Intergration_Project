@@ -1,14 +1,11 @@
 {
-  "incremental": false,
   "compilerOptions": {
     "target": "es2016",
     "module": "commonjs",
     "rootDir": "./src",
-    "baseUrl": "./src",
-    "resolveJsonModule": true,
+    "outDir": "./dist",
     "declaration": true,
     "sourceMap": true,
-    "outDir": "dist",
     "removeComments": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
@@ -18,5 +15,7 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true
-  }
+  },
+  "include": ["src/**/*", "src/tests/**/*"],
+  "exclude": ["node_modules", "dist", "jest.config.ts", "jest.setup.ts"]
 }
