@@ -1,12 +1,12 @@
-name: Deployment Pipeline for Dev Environment
+name: PR Checks for Dev Environment
 
 on:
-  push:
+  pull_request:
     branches:
       - dev
 
 jobs:
-  deploy:
+  pr-checks:
     runs-on: self-hosted
     strategy:
       matrix:
@@ -32,8 +32,3 @@ jobs:
 
       - name: Build the project
         run: npm run build
-
-      - name: Deploy to Development Environment
-        run: |
-          echo "Deploying to development environment..."
-          # Add your deployment script here for dev
