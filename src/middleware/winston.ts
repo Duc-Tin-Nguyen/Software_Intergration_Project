@@ -5,7 +5,7 @@ const options = {
     level: 'info',
     filename: './logs/app.log',
     handleExceptions: true,
-    maxsize: 5242880,
+    maxsize: 5242880, // 5MB
     maxFiles: 5,
     format: winston.format.combine(
       winston.format.timestamp(),
@@ -30,10 +30,15 @@ const logger = winston.createLogger({
   exitOnError: false,
 });
 
-(logger as any).stream = {
-  write: function (message: string, _encoding: string) {
-    logger.info(message);
+interface Stream {
+  write(message: string): void;
+}
+
+const stream: Stream = {
+  write(message: string): void {
+    logger.info(message.trim());
   },
 };
 
 export default logger;
+export { stream };

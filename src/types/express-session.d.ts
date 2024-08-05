@@ -1,4 +1,3 @@
-import express from 'express';
 import 'express-session';
 import { Session } from 'express-session';
 

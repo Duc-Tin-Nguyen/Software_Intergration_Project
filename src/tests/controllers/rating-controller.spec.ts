@@ -2,7 +2,7 @@ import request from 'supertest';
 import express, { Request, Response, NextFunction } from 'express';
 import { addRating } from '../../controllers/rating.controller';
 import pool from '../../boot/database/db_connect';
-import ratingModel from '../../models/ratingModel';
+import ratingModel from '../../models/ratingModel'; // Assuming ratingModel has a named export for its type
 import { queryError, success, badRequest } from '../../constants/statusCodes';
 
 jest.mock('../../boot/database/db_connect');
@@ -37,7 +37,7 @@ describe('Rating Controller', () => {
   it('should add a rating successfully', async () => {
     const mockRating = { email: 'testuser@example.com', movie_id: 1, rating: 4 };
 
-    (ratingModel as any).mockImplementation(() => ({
+    (ratingModel as unknown as jest.Mock).mockImplementation(() => ({
       save: jest.fn().mockResolvedValue(mockRating),
     }));
     (ratingModel.find as jest.Mock).mockResolvedValue([{ rating: 4 }, { rating: 5 }]);
@@ -73,7 +73,7 @@ describe('Rating Controller', () => {
   });
 
   it('should handle database errors gracefully', async () => {
-    (ratingModel as any).mockImplementation(() => ({
+    (ratingModel as unknown as jest.Mock).mockImplementation(() => ({
       save: jest.fn().mockRejectedValue(new Error('Database error')),
     }));
 
