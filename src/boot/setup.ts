@@ -1,7 +1,7 @@
 import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import mongoose from 'mongoose';
+import mongoose from 'mongoose'; // Keep this import if you're using Mongoose
 import session from 'express-session';
 import morgan from 'morgan';
 import logger from '../middleware/winston';
@@ -29,8 +29,8 @@ const app: Application = express();
 try {
   mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/epita');
   logger.info('MongoDB Connected');
-} catch (error: any) {
-  logger.error('Error connecting to DB' + error);
+} catch (error: unknown) {
+  logger.error('Error connecting to DB', error instanceof Error ? error : new Error(String(error)));
 }
 
 // MIDDLEWARE
@@ -74,16 +74,19 @@ const registerCoreMiddleWare = (): void => {
     app.use(notFound);
 
     logger.http('Done registering all middlewares');
-  } catch (err: any) {
-    logger.error('Error thrown while executing registerCoreMiddleWare');
+  } catch (err: unknown) {
+    logger.error('Error thrown while executing registerCoreMiddleWare', err instanceof Error ? err : new Error(String(err)));
     process.exit(1);
   }
 };
 
 // handling uncaught exceptions
 const handleError = (): void => {
-  process.on('uncaughtException', (err: any) => {
-    logger.error(`UNCAUGHT_EXCEPTION OCCURRED: ${JSON.stringify(err.stack)}`);
+  process.on('uncaughtException', (err: Error) => {
+    logger.error(`UNCAUGHT_EXCEPTION OCCURRED: ${err.stack}`);
+  });
+  process.on('unhandledRejection', (reason: unknown) => {
+    logger.error(`UNHANDLED_PROMISE_REJECTION OCCURRED: ${reason}`);
   });
 };
 
@@ -99,13 +102,9 @@ const startApp = (): void => {
 
     // exit on uncaught exception
     handleError();
-  } catch (err: any) {
+  } catch (err: unknown) {
     logger.error(
-      `startup :: Error while booting the application ${JSON.stringify(
-        err,
-        undefined,
-        2
-      )}`
+      `startup :: Error while booting the application ${err instanceof Error ? err.stack : String(err)}`
     );
     throw err;
   }

@@ -1,6 +1,11 @@
 import winston from 'winston';
 import logger from '../../middleware/winston';
 
+// Define a type for the stream object if it is not already defined
+interface LoggerStream {
+  write: (message: string, encoding: string) => void;
+}
+
 describe('Winston Logger', () => {
   it('should create a logger with file and console transports', () => {
     const transports = logger.transports;
@@ -30,14 +35,17 @@ describe('Winston Logger', () => {
         level: 'info',
         message: 'Test log for file transport',
       }),
-      expect.any(Function)
+      expect.any(Function) // Expecting a callback function here
     );
   });
 
   it('should handle stream write method correctly', () => {
+    // Type the stream object explicitly
+    const stream = (logger as unknown as { stream: LoggerStream }).stream;
+
     const logSpy = jest.spyOn(logger, 'info');
 
-    (logger as any).stream.write('Test stream message', 'utf-8');
+    stream.write('Test stream message', 'utf-8');
 
     expect(logSpy).toHaveBeenCalledWith('Test stream message');
   });

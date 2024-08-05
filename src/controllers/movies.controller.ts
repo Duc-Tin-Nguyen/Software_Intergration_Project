@@ -6,14 +6,17 @@ import { queryError, success } from '../constants/statusCodes';
 interface Movie {
   type: string;
   movie_id: number;
-  [key: string]: any;
+  title?: string; // Example of a more specific property
+  release_date?: Date;
+  rating?: number;
+  [key: string]: string | number | Date | undefined; // More precise types
 }
 
 const getMovies = async (req: Request, res: Response): Promise<Response> => {
-  const { category } = req.query;
+  const { category } = req.query as { category?: string };
 
   if (category) {
-    const result = await getMoviesByCategory(category as string);
+    const result = await getMoviesByCategory(category);
     if (result.length === 0) {
       return res.status(success).json({ movies: [], message: 'No movies found in this category' });
     }
@@ -36,8 +39,12 @@ const getMovies = async (req: Request, res: Response): Promise<Response> => {
       }, {});
 
       return res.status(success).json({ movies: groupedMovies });
-    } catch (error) {
-      logger.error(`Error while fetching movies: ${error.stack || error.message}`);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        logger.error(`Error while fetching movies: ${error.stack}`);
+      } else {
+        logger.error(`Unknown error while fetching movies: ${String(error)}`);
+      }
       return res
         .status(queryError)
         .json({ error: 'Exception occurred while fetching movies' });
@@ -49,8 +56,12 @@ const getMoviesByCategory = async (category: string): Promise<Movie[]> => {
   try {
     const movies = await pool.query('SELECT * FROM movies WHERE type = $1 ORDER BY release_date DESC;', [category]);
     return movies.rows;
-  } catch (error) {
-    logger.error(error.stack || error.message);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      logger.error(`Error while fetching movies by category: ${error.stack}`);
+    } else {
+      logger.error(`Unknown error while fetching movies by category: ${String(error)}`);
+    }
     throw error;
   }
 };
@@ -59,11 +70,15 @@ const getTopRatedMovies = async (_req: Request, res: Response): Promise<Response
   try {
     const movies = await pool.query('SELECT * FROM movies ORDER BY rating DESC LIMIT 10;');
     return res.status(success).json({ movies: movies.rows });
-  } catch (error) {
-    logger.error(error.stack || error.message);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      logger.error(`Error while fetching top-rated movies: ${error.stack}`);
+    } else {
+      logger.error(`Unknown error while fetching top-rated movies: ${String(error)}`);
+    }
     return res
       .status(queryError)
-      .json({ error: 'Exception occurred while fetching top rated movies' });
+      .json({ error: 'Exception occurred while fetching top-rated movies' });
   }
 };
 
@@ -80,8 +95,12 @@ const getSeenMovies = async (req: Request, res: Response): Promise<Response> => 
       [email]
     );
     return res.status(success).json({ movies: movies.rows });
-  } catch (error) {
-    logger.error(error.stack || error.message);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      logger.error(`Error while fetching seen movies: ${error.stack}`);
+    } else {
+      logger.error(`Unknown error while fetching seen movies: ${String(error)}`);
+    }
     return res
       .status(queryError)
       .json({ error: 'Exception occurred while fetching seen movies' });

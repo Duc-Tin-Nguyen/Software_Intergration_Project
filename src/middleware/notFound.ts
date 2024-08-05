@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 
-const notFound = (_req: Request, res: Response, _next: NextFunction): void => {
+const notFound = (_req: Request, res: Response): void => {
   const err = new Error('Not Found');
   res.status(404).json({
     error: {

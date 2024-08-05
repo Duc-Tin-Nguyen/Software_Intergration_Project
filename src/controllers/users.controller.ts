@@ -15,7 +15,19 @@ declare module 'express-session' {
   }
 }
 
-const register = async (req: Request<{}, {}, RegisterRequestBody>, res: Response): Promise<void> => {
+// Define types for query results
+interface User {
+  email: string;
+  username: string;
+}
+
+// Define a generic interface for query results to improve type safety
+interface QueryResult<T> {
+  rows: T[];
+  rowCount: number;
+}
+
+const register = async (req: Request<object, unknown, RegisterRequestBody>, res: Response): Promise<void> => {
   const { email, username, password, country, city, street, creation_date } = req.body;
 
   if (!email || !username || !password || !country) {
@@ -26,9 +38,9 @@ const register = async (req: Request<{}, {}, RegisterRequestBody>, res: Response
   const client = await pool.connect();
 
   try {
-    const result = await client.query('SELECT * FROM users WHERE email = $1;', [email]);
+    const result: QueryResult<User> = await client.query('SELECT * FROM users WHERE email = $1;', [email]);
 
-    if (result.rowCount) {
+    if (result.rowCount > 0) {
       res.status(userAlreadyExists).json({ message: 'User already has an account' });
     } else {
       await client.query('BEGIN');
@@ -36,14 +48,14 @@ const register = async (req: Request<{}, {}, RegisterRequestBody>, res: Response
       const addedUser = await client.query(
         `INSERT INTO users(email, username, password, creation_date)
          VALUES ($1, $2, crypt($3, gen_salt('bf')), $4);`,
-        [email, username, password, creation_date],
+        [email, username, password, creation_date]
       );
 
       logger.info('USER ADDED', addedUser.rowCount);
 
       const address = await client.query(
         `INSERT INTO addresses(email, country, street, city) VALUES ($1, $2, $3, $4);`,
-        [email, country, street, city],
+        [email, country, street, city]
       );
 
       logger.info('ADDRESS ADDED', address.rowCount);
@@ -51,16 +63,21 @@ const register = async (req: Request<{}, {}, RegisterRequestBody>, res: Response
       res.status(success).json({ message: 'User created' });
       await client.query('COMMIT');
     }
-  } catch (error) {
+  } catch (error: unknown) {
     await client.query('ROLLBACK');
-    logger.error((error as Error).stack);
-    res.status(queryError).json({ message: 'Exception occurred while registering' });
+    if (error instanceof Error) {
+      logger.error(error.stack);
+      res.status(queryError).json({ message: 'Exception occurred while registering' });
+    } else {
+      logger.error('Unknown error occurred');
+      res.status(queryError).json({ message: 'Exception occurred while registering' });
+    }
   } finally {
     client.release();
   }
 };
 
-const login = async (req: Request<{}, {}, LoginRequestBody> & { session: SessionData }, res: Response): Promise<void> => {
+const login = async (req: Request<object, unknown, LoginRequestBody> & { session: SessionData }, res: Response): Promise<void> => {
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -69,7 +86,7 @@ const login = async (req: Request<{}, {}, LoginRequestBody> & { session: Session
   }
 
   try {
-    const result = await pool.query(
+    const result: QueryResult<User> = await pool.query(
       'SELECT email, username FROM users WHERE email = $1 AND password = crypt($2, password);',
       [email, password]
     );
@@ -92,12 +109,15 @@ const login = async (req: Request<{}, {}, LoginRequestBody> & { session: Session
     } else {
       res.status(notFound).json({ message: 'Incorrect email/password' });
     }
-  } catch (error) {
-    logger.error((error as Error).stack);
-    res.status(queryError).json({ message: 'Exception occurred while logging in' });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      logger.error(error.stack);
+      res.status(queryError).json({ message: 'Exception occurred while logging in' });
+    } else {
+      logger.error('Unknown error occurred');
+      res.status(queryError).json({ message: 'Exception occurred while logging in' });
+    }
   }
 };
-
-
 
 export { register, login };

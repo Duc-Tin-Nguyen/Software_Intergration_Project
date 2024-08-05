@@ -1,6 +1,6 @@
 import mongoose, { ConnectOptions } from 'mongoose';
 import Message from '../../models/messageModel';
-import { IMessage } from '../../types/message.d'; // Assuming IMessage is in a separate types file
+import { IMessage } from '../../types/message.d';
 
 // Mock the Mongoose methods we use in our tests
 const mockSave = jest.fn();
@@ -61,7 +61,7 @@ describe('Message Model', () => {
   it('should save a message with all required fields', async () => {
     const messageData: Partial<IMessage> = {
       name: 'Hello',
-      user: 'test@example.com' as any, // Using any type to bypass ObjectId type mismatch
+      user: 'test@example.com' as string, // Adjusted type from `any` to `string`
     };
 
     mockSave.mockResolvedValue(messageData);

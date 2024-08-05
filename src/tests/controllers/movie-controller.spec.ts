@@ -44,7 +44,7 @@ describe('Movie Controllers', () => {
         ],
       };
 
-      (pool.query as unknown as jest.Mock).mockResolvedValue(mockMovies);
+      (pool.query as jest.Mock).mockResolvedValue(mockMovies);
 
       const response = await request(app).get('/movies');
 
@@ -59,8 +59,8 @@ describe('Movie Controllers', () => {
     });
 
     it('should return a message when no movies are found', async () => {
-      const mockMovies = { rows: [] as any[] };
-      (pool.query as unknown as jest.Mock).mockResolvedValue(mockMovies);
+      const mockMovies = { rows: [] as { type: string; movie_id: number; title: string }[] };
+      (pool.query as jest.Mock).mockResolvedValue(mockMovies);
 
       const response = await request(app).get('/movies');
 
@@ -70,7 +70,7 @@ describe('Movie Controllers', () => {
     });
 
     it('should handle database errors gracefully', async () => {
-      (pool.query as unknown as jest.Mock).mockRejectedValue(new Error('Database error'));
+      (pool.query as jest.Mock).mockRejectedValue(new Error('Database error'));
 
       const response = await request(app).get('/movies');
 
@@ -88,7 +88,7 @@ describe('Movie Controllers', () => {
         ],
       };
 
-      (pool.query as unknown as jest.Mock).mockResolvedValue(mockMovies);
+      (pool.query as jest.Mock).mockResolvedValue(mockMovies);
 
       const response = await request(app).get('/movies/top');
 
@@ -97,7 +97,7 @@ describe('Movie Controllers', () => {
     });
 
     it('should handle database errors gracefully', async () => {
-      (pool.query as unknown as jest.Mock).mockRejectedValue(new Error('Database error'));
+      (pool.query as jest.Mock).mockRejectedValue(new Error('Database error'));
 
       const response = await request(app).get('/movies/top');
 
@@ -115,7 +115,7 @@ describe('Movie Controllers', () => {
         ],
       };
 
-      (pool.query as unknown as jest.Mock).mockResolvedValue(mockMovies);
+      (pool.query as jest.Mock).mockResolvedValue(mockMovies);
 
       const response = await request(app).get('/movies/me').set('Authorization', 'Bearer mock-token');
 
@@ -131,7 +131,7 @@ describe('Movie Controllers', () => {
     });
 
     it('should handle database errors gracefully', async () => {
-      (pool.query as unknown as jest.Mock).mockRejectedValue(new Error('Database error'));
+      (pool.query as jest.Mock).mockRejectedValue(new Error('Database error'));
 
       const response = await request(app).get('/movies/me').set('Authorization', 'Bearer mock-token');
 
